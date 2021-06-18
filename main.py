@@ -21,9 +21,9 @@ TEST_LABELS_FILENAME  = DATA_DIR + 't10k-labels.idx1-ubyte'
 TRAIN_DATA_FILENAME   = DATA_DIR + 'train-images.idx3-ubyte'
 TRAIN_LABELS_FILENAME = DATA_DIR + 'train-labels.idx1-ubyte'
 
-
-n_train = 10000
+n_train = 10
 n_test = 100
+
 
 def bytes_to_int(byte_data):
     return int.from_bytes(byte_data, 'big')
@@ -46,9 +46,6 @@ def read_images(filename, n_max_images=None):
                     row.append(pixel)
                 image.append(row)
             images.append(image)
-    print(n_images)
-    print(n_rows)
-    print(n_columns)
     return images
 
 def read_labels(filename, n_max_labels=None):
@@ -164,7 +161,12 @@ def main():
     y_test = read_labels(TEST_LABELS_FILENAME, n_test)
 
 
-    if len(X_test) < 100:
+    # if DEBUG:
+    #     X_test = [read_image(f'{DATA_DIR}test.png')]
+    #     y_test = [5]
+
+
+    if len(X_test) <= 100:
     	for idx, test_sample in enumerate(X_test):
         	write_image(test_sample, f'{TEST_DIR}{idx}.png')
 
@@ -210,16 +212,6 @@ def main():
         
 if __name__ == '__main__':
     main()
-
-
-'''
-
-	7 2 1 0 4 1 4 9 6 9 0 2 9 0 1 8 9 7 8 4 9 6 6 5 4 0 7 4 0 1 3 1 3 6 7 2 7
-
-	7 2 1 0 4 1 4 9 6 9 0 8 9 0 1 5 9 7 5 4 7 6 6 5 9 0 7 4 0 1 3 1 3 6 7 2 7 0.822
-
-
-'''
 
 
 
