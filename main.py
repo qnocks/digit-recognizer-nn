@@ -21,7 +21,7 @@ TEST_LABELS_FILENAME  = DATA_DIR + 't10k-labels.idx1-ubyte'
 TRAIN_DATA_FILENAME   = DATA_DIR + 'train-images.idx3-ubyte'
 TRAIN_LABELS_FILENAME = DATA_DIR + 'train-labels.idx1-ubyte'
 
-n_train = 10
+n_train = 1000
 n_test = 100
 
 
@@ -153,45 +153,160 @@ def test_prediction(index, W1, b1, W2, b2, X_train, Y_train):
     plt.show()
 
 
-
-def main():
+def fetch_train_data(n_train):
     X_train = read_images(TRAIN_DATA_FILENAME, n_train)
     y_train = read_labels(TRAIN_LABELS_FILENAME, n_train)
-    X_test = read_images(TEST_DATA_FILENAME, n_test)
-    y_test = read_labels(TEST_LABELS_FILENAME, n_test)
-
-
-    # if DEBUG:
-    #     X_test = [read_image(f'{DATA_DIR}test.png')]
-    #     y_test = [5]
-
-
-    if len(X_test) <= 100:
-    	for idx, test_sample in enumerate(X_test):
-        	write_image(test_sample, f'{TEST_DIR}{idx}.png')
-
-
     X_train = extract_features(X_train)
-    X_test = extract_features(X_test)
-
     X_train = np.array(X_train).T
     y_train = np.array(y_train)
     X_train = X_train / 255.
-    
+    return X_train, y_train
+
+def fetch_test_data(n_test):
+    X_test = read_images(TEST_DATA_FILENAME, n_test)
+    y_test = read_labels(TEST_LABELS_FILENAME, n_test)
+    X_test = extract_features(X_test)
+
+    ziped = list(zip(X_test, y_test))
+    np.random.shuffle(ziped)
+    unziped = list(zip(*ziped))
+    X_test = unziped[0]
+    y_test = unziped[1]
+
     X_test = np.array(X_test).T
     y_test = np.array(y_test)
     X_test = X_test / 255.
 
+    return X_test, y_test
 
-    W1, b1, W2, b2 = gradient_descent(X_train, y_train, 0.10, 500)
+
+def menu():
+    print('\nMENU')
+    print('1. Start training')
+    print('2. Test data')
+    print('3. Own test')
+    print('4. Exit\n')
 
 
-    test_prediction(0, W1, b1, W2, b2, X_train, y_train)
-    test_prediction(3, W1, b1, W2, b2, X_train, y_train)
-    test_prediction(1, W1, b1, W2, b2, X_train, y_train)
-    test_prediction(2, W1, b1, W2, b2, X_train, y_train)
+def test_data(X_test, y_test, W1, b1, W2, b2):
+    dev_predictions = make_predictions(X_test, W1, b1, W2, b2)
+    print(f'Predictions: {dev_predictions}')
+    print(f'Y: {y_test}')
+    accuracy = get_accuracy(dev_predictions, y_test)
+    print(f'Accurace on test data: {accuracy * 100}%')
 
-    print('\n========================TEST DATA=======================\n')
+
+
+def main():
+
+    # X_train = read_images(TRAIN_DATA_FILENAME, n_train)
+    # y_train = read_labels(TRAIN_LABELS_FILENAME, n_train)
+    # X_test = read_images(TEST_DATA_FILENAME, n_test)
+    # y_test = read_labels(TEST_LABELS_FILENAME, n_test)    
+
+    # if DEBUG:
+    #     X_test = [read_image(f'{DATA_DIR}test.png')]
+    #     y_test = [5]
+    # if len(X_test) <= 100:
+    # 	for idx, test_sample in enumerate(X_test):
+    #     	write_image(test_sample, f'{TEST_DIR}{idx}.png')
+
+
+    # X_train = extract_features(X_train)
+    # X_test = extract_features(X_test)
+
+    # X_train = np.array(X_train).T
+    # y_train = np.array(y_train)
+    # X_train = X_train / 255.
+    
+    # X_test = np.array(X_test).T
+    # y_test = np.array(y_test)
+    # X_test = X_test / 255.
+
+    trained = False
+
+    while True:
+        menu()
+        press = input()
+
+        if press == '1':
+            n_train = int(input('Enter count of training samples (up to 60k): '))
+            X_train, y_train = fetch_train_data(n_train)
+            print('\n========================TRAINING========================\n')
+            W1, b1, W2, b2 = gradient_descent(X_train, y_train, 0.10, 500)
+            print('\n====================END OF TRAINING=====================\n')
+            trained = True
+
+        elif press == '2':
+            if not trained:
+                print('You must train the neural network firstly')
+                continue
+            n_test = int(input('Enter count of test samples (up to 10k): '))
+            X_test, y_test = fetch_test_data(n_test)
+            print('\n========================TEST DATA=======================\n')
+            test_data(X_test, y_test, W1, b1, W2, b2)
+
+        elif press == '3':
+            if not trained:
+                print('You must train the neural network firstly')
+                continue
+            print(f'To test your example put file under \'{TEST_DIR}\' directory named test.png, please')
+            y_test = [int(input('Then write right answer to the example? '))]
+            X_test = [read_image(f'{DATA_DIR}test.png')]
+            X_test = extract_features(X_test)
+            X_test = np.array(X_test).T
+            y_test = np.array(y_test)
+            X_test = X_test / 255.
+            test_data(X_test, y_test, W1, b1, W2, b2)
+
+        elif press == '4':
+            return
+
+        else:
+            print('Wrong input. Try again')
+        
+
+
+    # while True:
+    #     ans = input('Do u want to start neural network training? (Y/N): ')
+    #     if ans == 'Y' or ans == 'y':
+    #         ans = int(input('Enter count of training samples: '))
+    #         n_train = ans
+    #         X_train, y_train = fetch_train_data(n_train)
+    #         print('\n========================TRAINING========================\n')
+    #         W1, b1, W2, b2 = gradient_descent(X_train, y_train, 0.10, 500)
+    #         print('\n====================END OF TRAINING=====================\n')
+    #         ans = int(input('Enter count of test samples: '))
+    #         n_test = ans
+    #         X_test, y_test = fetch_test_data(n_test)
+    #         print('\n========================TEST DATA=======================\n')
+    #         dev_predictions = make_predictions(X_test, W1, b1, W2, b2)
+    #         print(f'Predictions: {dev_predictions}')
+    #         print(f'Y: {y_test}')
+    #         accuracy = get_accuracy(dev_predictions, y_test)
+    #         print(f'Accurace on test data: {accuracy * 100}%')
+    #     elif ans == 'N' or ans == 'n':
+    #         ans = int(input('Enter count of test samples: '))
+    #         n_test = ans
+    #         X_test, y_test = fetch_test_data(n_test)
+    #         print('\n========================TEST DATA=======================\n')
+    #         dev_predictions = make_predictions(X_test, W1, b1, W2, b2)
+    #         print(f'Predictions: {dev_predictions}')
+    #         print(f'Y: {y_test}')
+    #         accuracy = get_accuracy(dev_predictions, y_test)
+    #         print(f'Accurace on test data: {accuracy * 100}%')
+    #     else:
+    #         print('Wrong input. Try again')
+    #     exit = input('Enter Q to exit or else to continue: ')
+    #     if exit == 'Q' or exit == 'q':
+    #         break
+
+
+    # test_prediction(0, W1, b1, W2, b2, X_train, y_train)
+    # test_prediction(3, W1, b1, W2, b2, X_train, y_train)
+    # test_prediction(1, W1, b1, W2, b2, X_train, y_train)
+    # test_prediction(2, W1, b1, W2, b2, X_train, y_train)
+
 
     # X_test = [read_image(f'{DATA_DIR}test.png')]
     # X_test = extract_features(X_test)
@@ -201,15 +316,7 @@ def main():
     # X_test = X_test / 255.
 
 
-    dev_predictions = make_predictions(X_test, W1, b1, W2, b2)
-
-    print(f'Predictions: {dev_predictions}')
-    print(f'Y: {y_test}')
-    accuracy = get_accuracy(dev_predictions, y_test)
-    print(f'Accurace on test data: {accuracy * 100}%')
-
-
-        
+  
 if __name__ == '__main__':
     main()
 
